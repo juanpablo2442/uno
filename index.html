@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Wild Duel — 2 Player Card Game</title>
+<style>
+  :root{
+    --bg:#07070a; --panel:#111118; --panel2:#181824; --text:#f7f7fb; --muted:#9b9bab;
+    --red:#ff3b30; --blue:#0a84ff; --green:#30d158; --yellow:#ffd60a; --accent:#7c5cff;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:
+    radial-gradient(circle at 15% 10%, rgba(124,92,255,.20), transparent 30%),
+    radial-gradient(circle at 85% 90%, rgba(10,132,255,.16), transparent 28%),var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+  button,input{font:inherit}
+  .app{max-width:980px;margin:0 auto;padding:18px;min-height:100vh;display:flex;flex-direction:column}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#ff3b30,#7c5cff,#0a84ff);display:grid;place-items:center;font-weight:950;box-shadow:0 10px 30px rgba(124,92,255,.25);transform:rotate(-5deg)}
+  .brand h1{font-size:20px;margin:0;letter-spacing:-.03em}.brand small{display:block;color:var(--muted);font-size:12px;margin-top:1px}
+  .iconbtn{border:1px solid #2a2a36;background:#13131b;color:white;border-radius:12px;padding:10px 12px;cursor:pointer}
+  .screen{display:none;flex:1}.screen.active{display:flex;flex-direction:column}
+  .setup{margin:auto;width:min(100%,520px);background:rgba(17,17,24,.88);backdrop-filter:blur(15px);border:1px solid #282834;border-radius:28px;padding:26px;box-shadow:0 24px 80px rgba(0,0,0,.42)}
+  .setup h2{font-size:34px;margin:0 0 8px;letter-spacing:-.05em}.setup p{color:var(--muted);line-height:1.5;margin:0 0 22px}
+  .field{margin:14px 0}.field label{display:block;color:#c9c9d2;font-size:13px;margin-bottom:7px}.field input{width:100%;padding:14px 15px;border-radius:14px;border:1px solid #2b2b37;background:#0d0d13;color:white;outline:none}
+  .toggleline{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-top:1px solid #262632}.toggleline span small{display:block;color:var(--muted);margin-top:2px}.switch{position:relative;width:50px;height:28px}.switch input{display:none}.slider{position:absolute;inset:0;background:#30303a;border-radius:99px;cursor:pointer}.slider:before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;background:white;border-radius:50%;transition:.18s}.switch input:checked+.slider{background:var(--accent)}.switch input:checked+.slider:before{transform:translateX(22px)}
+  .primary{width:100%;border:0;background:linear-gradient(135deg,#7c5cff,#4f8cff);color:white;padding:15px 18px;border-radius:15px;font-weight:800;font-size:16px;cursor:pointer;box-shadow:0 12px 32px rgba(92,92,255,.25);margin-top:16px}
+  .game{gap:12px}
+  .players{display:grid;grid-template-columns:1fr 1fr;gap:10px}.player{background:rgba(17,17,24,.88);border:1px solid #252531;border-radius:18px;padding:13px 14px;display:flex;align-items:center;justify-content:space-between;transition:.2s}.player.active{border-color:#7c5cff;box-shadow:0 0 0 1px rgba(124,92,255,.25),0 10px 30px rgba(124,92,255,.10)}.pname{font-weight:800}.count{color:var(--muted);font-size:13px;margin-top:2px}.turnpill{font-size:11px;padding:6px 8px;background:#242431;border-radius:99px;color:#bdbdcc}.player.active .turnpill{background:#7c5cff;color:white}
+  .table{flex:1;min-height:390px;background:linear-gradient(180deg,rgba(18,18,28,.92),rgba(12,12,18,.92));border:1px solid #242430;border-radius:26px;display:flex;flex-direction:column;justify-content:center;align-items:center;position:relative;overflow:hidden;padding:22px}.table:before{content:"";position:absolute;width:380px;height:380px;border:1px solid rgba(255,255,255,.035);border-radius:50%;box-shadow:0 0 0 60px rgba(255,255,255,.012),0 0 0 120px rgba(255,255,255,.008)}
+  .status{position:absolute;top:14px;left:14px;right:14px;text-align:center;color:#d5d5df;font-size:13px;z-index:2}.status strong{color:white}
+  .pilearea{display:flex;align-items:center;justify-content:center;gap:28px;z-index:2;margin-top:12px}.pilewrap{text-align:center}.pilelabel{font-size:12px;color:var(--muted);margin-top:8px}
+  .card{width:112px;height:164px;border-radius:18px;border:5px solid rgba(255,255,255,.92);box-shadow:0 14px 30px rgba(0,0,0,.35);display:grid;place-items:center;position:relative;font-weight:950;user-select:none;transition:transform .16s,filter .16s}.card .oval{width:75%;height:62%;border-radius:50%;background:rgba(255,255,255,.93);display:grid;place-items:center;transform:rotate(-22deg);color:#111}.card .val{font-size:38px;transform:rotate(22deg)}.corner{position:absolute;font-size:17px}.tl{top:8px;left:9px}.br{bottom:8px;right:9px;transform:rotate(180deg)}
+  .red{background:var(--red)}.blue{background:var(--blue)}.green{background:var(--green)}.yellow{background:var(--yellow);color:#111}.wild{background:conic-gradient(from 45deg,#ff3b30 0 25%,#0a84ff 25% 50%,#30d158 50% 75%,#ffd60a 75%)}.back{background:linear-gradient(135deg,#15151d,#232332);border-color:#f2f2f5}.back .oval{background:linear-gradient(135deg,#ff3b30,#7c5cff,#0a84ff);color:white}.back .val{font-size:20px;line-height:1.05;text-align:center}
+  .drawpile{cursor:pointer}.drawpile:active{transform:scale(.97)}
+  .penalty{position:absolute;bottom:14px;background:#2b1632;border:1px solid #683077;color:#f3cbff;padding:9px 12px;border-radius:99px;font-size:12px;z-index:2;display:none}.penalty.show{display:block}
+  .handbox{background:rgba(17,17,24,.92);border:1px solid #252531;border-radius:22px;padding:14px}.handtop{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.handtop h3{margin:0;font-size:14px}.handtop span{font-size:12px;color:var(--muted)}.hand{display:flex;gap:8px;overflow-x:auto;padding:5px 2px 10px;scrollbar-width:none}.hand::-webkit-scrollbar{display:none}.hand .card{min-width:76px;width:76px;height:112px;border-width:4px;border-radius:13px;cursor:pointer}.hand .card .oval{width:76%;height:62%}.hand .card .val{font-size:26px}.hand .corner{font-size:12px;top:5px;left:6px}.hand .br{left:auto;top:auto;right:6px;bottom:5px}.hand .card.playable{transform:translateY(-4px);box-shadow:0 15px 26px rgba(0,0,0,.35),0 0 0 2px rgba(255,255,255,.08)}.hand .card:not(.playable){filter:saturate(.6) brightness(.65)}
+  .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.secondary{border:1px solid #30303c;background:#15151e;color:#f7f7fb;padding:12px;border-radius:13px;font-weight:700;cursor:pointer}.danger{color:#ff8179}
+  .overlay{position:fixed;inset:0;background:rgba(4,4,8,.86);backdrop-filter:blur(16px);z-index:20;display:none;align-items:center;justify-content:center;padding:22px}.overlay.show{display:flex}.modal{width:min(100%,470px);background:#12121a;border:1px solid #2a2a36;border-radius:26px;padding:24px;text-align:center;box-shadow:0 30px 90px rgba(0,0,0,.5)}.modal h2{font-size:30px;margin:4px 0 8px;letter-spacing:-.04em}.modal p{color:var(--muted);line-height:1.45;margin:0 0 18px}.colorgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.colorbtn{height:80px;border:0;border-radius:18px;cursor:pointer;font-weight:900;color:white;font-size:16px}.colorbtn.yellow{color:#111}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);background:#f2f2f6;color:#101016;padding:11px 16px;border-radius:99px;font-weight:800;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:40}.toast.show{opacity:1;transform:translate(-50%,0)}
+  .winemoji{font-size:54px;margin-bottom:2px}
+  @media(max-width:640px){.app{padding:12px}.brand small{display:none}.setup{padding:20px;border-radius:22px}.setup h2{font-size:29px}.table{min-height:345px;border-radius:22px}.pilearea{gap:18px}.card{width:96px;height:142px;border-radius:16px}.card .val{font-size:32px}.players{gap:8px}.player{padding:11px 12px}.pname{font-size:14px}.turnpill{font-size:10px}.handbox{padding:11px}.hand .card{min-width:70px;width:70px;height:103px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand"><div class="logo">WD</div><div><h1>Wild Duel</h1><small>chaotic 2-player card battles</small></div></div>
+    <button class="iconbtn" id="newGameBtn">New game</button>
+  </div>
+
+  <section id="setupScreen" class="screen active">
+    <div class="setup">
+      <h2>Make it chaotic.</h2>
+      <p>A two-player UNO-style game with a completely shuffled deck and an intentionally heavy dose of +2, +4, skips, reverses, and wild cards. No player gets special treatment.</p>
+      <div class="field"><label>Player 1</label><input id="p1" maxlength="18" value="You" /></div>
+      <div class="field"><label>Player 2</label><input id="p2" maxlength="18" value="GF" /></div>
+      <div class="toggleline"><span><b>Chaos deck</b><small>More action cards than standard</small></span><label class="switch"><input type="checkbox" id="chaos" checked><span class="slider"></span></label></div>
+      <div class="toggleline"><span><b>Stack draw cards</b><small>+2 on +2, +4 on +4</small></span><label class="switch"><input type="checkbox" id="stacking" checked><span class="slider"></span></label></div>
+      <button class="primary" id="startBtn">Start game</button>
+    </div>
+  </section>
+
+  <section id="gameScreen" class="screen game">
+    <div class="players">
+      <div class="player" id="player0"><div><div class="pname" id="name0">You</div><div class="count"><span id="count0">7</span> cards</div></div><span class="turnpill">WAITING</span></div>
+      <div class="player" id="player1"><div><div class="pname" id="name1">GF</div><div class="count"><span id="count1">7</span> cards</div></div><span class="turnpill">WAITING</span></div>
+    </div>
+    <div class="table">
+      <div class="status" id="status">Ready.</div>
+      <div class="pilearea">
+        <div class="pilewrap"><div id="drawPile" class="card back drawpile"><div class="oval"><div class="val">WILD<br>DUEL</div></div></div><div class="pilelabel">Tap to draw</div></div>
+        <div class="pilewrap"><div id="discard"></div><div class="pilelabel">Discard</div></div>
+      </div>
+      <div class="penalty" id="penalty"></div>
+    </div>
+    <div class="handbox">
+      <div class="handtop"><h3 id="handTitle">Your hand</h3><span id="handHint">Tap a glowing card</span></div>
+      <div class="hand" id="hand"></div>
+      <div class="actions"><button class="secondary" id="passBtn">Pass / end turn</button><button class="secondary danger" id="quitBtn">Quit</button></div>
+    </div>
+  </section>
+</div>
+
+<div class="overlay" id="passOverlay"><div class="modal"><div class="winemoji">🙈</div><h2 id="passTitle">Pass the phone</h2><p id="passText">Hand the phone to the next player. Their cards stay hidden until they tap below.</p><button class="primary" id="revealBtn">Reveal my hand</button></div></div>
+<div class="overlay" id="colorOverlay"><div class="modal"><h2>Choose a color</h2><p>This color becomes active immediately.</p><div class="colorgrid"><button class="colorbtn red" data-color="red">Red</button><button class="colorbtn blue" data-color="blue">Blue</button><button class="colorbtn green" data-color="green">Green</button><button class="colorbtn yellow" data-color="yellow">Yellow</button></div></div></div>
+<div class="overlay" id="winOverlay"><div class="modal"><div class="winemoji">🏆</div><h2 id="winTitle">Winner!</h2><p id="winText">That was brutal.</p><button class="primary" id="playAgainBtn">Play again</button></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const colors=['red','blue','green','yellow'];
+let state={players:[],hands:[[],[]],deck:[],discard:[],turn:0,currentColor:null,pendingDraw:0,pendingType:null,drawnThisTurn:false,playedThisTurn:false,chaos:true,stacking:true};
+
+function rand(n){return Math.floor(Math.random()*n)}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+function makeDeck(chaos){const d=[];
+  for(const c of colors){
+    for(let n=0;n<=9;n++){d.push({color:c,type:'num',value:String(n)}); if(n!==0)d.push({color:c,type:'num',value:String(n)})}
+    const actionCopies=chaos?4:2;
+    for(let i=0;i<actionCopies;i++){d.push({color:c,type:'skip',value:'⊘'});d.push({color:c,type:'reverse',value:'↺'});d.push({color:c,type:'draw2',value:'+2'})}
+  }
+  const wildCopies=chaos?8:4, wild4Copies=chaos?10:4;
+  for(let i=0;i<wildCopies;i++)d.push({color:'wild',type:'wild',value:'W'});
+  for(let i=0;i<wild4Copies;i++)d.push({color:'wild',type:'wild4',value:'+4'});
+  return shuffle(d);
+}
+function resetGame(){
+  state.players=[(p1.value||'Player 1').trim(),(p2.value||'Player 2').trim()]; state.hands=[[],[]]; state.chaos=chaos.checked; state.stacking=stacking.checked;
+  state.deck=makeDeck(state.chaos); state.discard=[]; state.pendingDraw=0;state.pendingType=null;state.turn=rand(2);state.drawnThisTurn=false;state.playedThisTurn=false;
+  for(let i=0;i<7;i++){state.hands[0].push(state.deck.pop());state.hands[1].push(state.deck.pop())}
+  let first; do{first=state.deck.pop(); if(first.type!=='num')state.deck.unshift(first)}while(first.type!=='num'); state.discard.push(first);state.currentColor=first.color;
+  name0.textContent=state.players[0];name1.textContent=state.players[1]; setupScreen.classList.remove('active');gameScreen.classList.add('active');
+  showPassOverlay();render();
+}
+function topCard(){return state.discard[state.discard.length-1]}
+function reshuffleIfNeeded(){if(state.deck.length===0&&state.discard.length>1){const top=state.discard.pop();state.deck=shuffle(state.discard.splice(0));state.discard=[top];toastMsg('Discard pile reshuffled')}}
+function canPlay(card){
+  if(state.pendingDraw>0 && state.stacking){return card.type===state.pendingType}
+  if(state.pendingDraw>0)return false;
+  const top=topCard(); return card.color==='wild'||card.color===state.currentColor||card.type===top.type||(card.type==='num'&&top.type==='num'&&card.value===top.value)
+}
+function cardHTML(card,small=false,idx=null){const playable=idx!==null&&canPlay(card);const display=card.type==='wild'?'WILD':card.value;return `<div class="card ${card.color} ${playable?'playable':''}" ${idx!==null?`data-idx="${idx}"`:''}><span class="corner tl">${display}</span><div class="oval"><div class="val">${display}</div></div><span class="corner br">${display}</span></div>`}
+function render(){
+  count0.textContent=state.hands[0].length;count1.textContent=state.hands[1].length;
+  [0,1].forEach(i=>{const el=document.getElementById('player'+i);el.classList.toggle('active',state.turn===i);el.querySelector('.turnpill').textContent=state.turn===i?'YOUR TURN':'WAITING'});
+  discard.innerHTML=cardHTML(topCard()); handTitle.textContent=state.players[state.turn]+'’s hand';
+  let playableCount=0; hand.innerHTML=state.hands[state.turn].map((c,i)=>{if(canPlay(c))playableCount++;return cardHTML(c,true,i)}).join('');
+  handHint.textContent=state.pendingDraw>0?(state.stacking?`Stack ${state.pendingType==='draw2'?'+2':'+4'} or draw ${state.pendingDraw}`:`Draw ${state.pendingDraw} cards`):(playableCount?'Tap a glowing card':'No playable card — draw');
+  status.innerHTML=`<strong>${state.players[state.turn]}</strong> to play • Active color: <strong style="text-transform:capitalize">${state.currentColor}</strong>`;
+  penalty.classList.toggle('show',state.pendingDraw>0); penalty.textContent=state.pendingDraw>0?`Penalty waiting: +${state.pendingDraw}`:'';
+  document.querySelectorAll('#hand .card').forEach(el=>el.onclick=()=>playCard(+el.dataset.idx));
+}
+function playCard(i){const card=state.hands[state.turn][i];if(!canPlay(card)){toastMsg('That card can’t be played');return}
+  state.hands[state.turn].splice(i,1);state.discard.push(card);state.playedThisTurn=true;state.drawnThisTurn=false;
+  if(card.color!=='wild')state.currentColor=card.color;
+  if(card.type==='draw2'){state.pendingDraw+=2;state.pendingType='draw2'}
+  if(card.type==='wild4'){state.pendingDraw+=4;state.pendingType='wild4'}
+  if(state.hands[state.turn].length===1)toastMsg(state.players[state.turn]+' has ONE card!');
+  if(state.hands[state.turn].length===0){showWinner(state.turn);render();return}
+  if(card.type==='wild'||card.type==='wild4'){colorOverlay.classList.add('show');colorOverlay.dataset.after=card.type;return}
+  resolveAfterCard(card);
+}
+function resolveAfterCard(card){
+  if(card.type==='skip'||card.type==='reverse'){
+    toastMsg(card.type==='skip'?'Opponent skipped — play again!':'Reverse = skip in a 2-player game — play again!');
+    state.drawnThisTurn=false; state.playedThisTurn=false; render();
+    return;
+  }
+  endTurn(false);
+}
+function drawCards(n){const arr=[];for(let i=0;i<n;i++){reshuffleIfNeeded();if(state.deck.length)arr.push(state.deck.pop())}state.hands[state.turn].push(...arr);return arr}
+function drawAction(){
+  if(state.playedThisTurn){toastMsg('You already played a card');return}
+  if(state.pendingDraw>0){const n=state.pendingDraw;drawCards(n);toastMsg(`${state.players[state.turn]} drew ${n}`);state.pendingDraw=0;state.pendingType=null;render();setTimeout(()=>endTurn(),350);return}
+  if(state.drawnThisTurn){toastMsg('You already drew');return}
+  const arr=drawCards(1);state.drawnThisTurn=true;render();if(arr[0]&&canPlay(arr[0]))toastMsg('You can play the card you drew');else{toastMsg('No luck — turn ends');setTimeout(()=>endTurn(),500)}
+}
+function endTurn(showOverlay=true){state.turn=1-state.turn;state.drawnThisTurn=false;state.playedThisTurn=false;render();if(showOverlay||true)setTimeout(showPassOverlay,180)}
+function showPassOverlay(){passTitle.textContent=`Pass to ${state.players[state.turn]}`;passText.textContent=`${state.players[state.turn]}, tap below when you have the phone. Your hand will stay hidden until then.`;passOverlay.classList.add('show')}
+function showWinner(i){winTitle.textContent=state.players[i]+' wins!';winText.textContent=state.chaos?'Absolute chaos. Exactly as intended.':'Clean win.';winOverlay.classList.add('show')}
+function toastMsg(msg){toast.textContent=msg;toast.classList.add('show');clearTimeout(window._tt);window._tt=setTimeout(()=>toast.classList.remove('show'),1600)}
+
+startBtn.onclick=resetGame;drawPile.onclick=drawAction;passBtn.onclick=()=>endTurn();quitBtn.onclick=()=>{gameScreen.classList.remove('active');setupScreen.classList.add('active')};newGameBtn.onclick=()=>{winOverlay.classList.remove('show');passOverlay.classList.remove('show');colorOverlay.classList.remove('show');gameScreen.classList.remove('active');setupScreen.classList.add('active')};
+revealBtn.onclick=()=>passOverlay.classList.remove('show');playAgainBtn.onclick=()=>{winOverlay.classList.remove('show');resetGame()};
+document.querySelectorAll('.colorbtn').forEach(btn=>btn.onclick=()=>{state.currentColor=btn.dataset.color;colorOverlay.classList.remove('show');const card=topCard();resolveAfterCard(card);render()});
+</script>
+</body>
+</html>
